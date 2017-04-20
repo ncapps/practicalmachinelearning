@@ -131,13 +131,8 @@ $(document).ready(function () {
 <div id="loading-and-cleaing-data" class="section level3">
 <h3>Loading and cleaing data</h3>
 <p>Data not measured by an accelerometer and variables where the majority of rows contained missing values were removed from the training dataset and were not used as predictors.</p>
-<pre class="r"><code>library(AppliedPredictiveModeling);library(caret)</code></pre>
-<pre><code>## Warning: package 'AppliedPredictiveModeling' was built under R version
-## 3.3.3</code></pre>
-<pre><code>## Warning: package 'caret' was built under R version 3.3.3</code></pre>
-<pre><code>## Loading required package: lattice</code></pre>
-<pre><code>## Loading required package: ggplot2</code></pre>
-<pre class="r"><code>trainfilename &lt;- &quot;pml-training.csv&quot;; testfilename &lt;- &quot;pml-testing.csv&quot;
+<pre class="r"><code>library(AppliedPredictiveModeling);library(caret)
+trainfilename &lt;- &quot;pml-training.csv&quot;; testfilename &lt;- &quot;pml-testing.csv&quot;
 ## Loaded 1622 rows and 160 columns
 df &lt;- read.csv(trainfilename,
                      header=TRUE,sep=&quot;,&quot;,na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;))
@@ -155,17 +150,8 @@ set.seed(333)</code></pre>
 <p>The Random Forest algorithm was selected because there were a large number of predictors where the interactions between variables is unknown. The model was trained using 10-fold cross validation with 3 repeats. The out-of-bag error rate (OOB) was estimated to be 3.16%.</p>
 <p>Training data was split such that 75% was used for training the model and 25% was used to evaluate model performance further. The random forest model had an accuracy of 98.71% on the test dataset.</p>
 <pre class="r"><code>tc &lt;- trainControl(method=&quot;repeatedcv&quot;, number=10, repeats=3)
-rf.fit &lt;- train(classe ~., method=&quot;rf&quot;, trControl=tc, ntree=10, data=training)</code></pre>
-<pre><code>## Loading required package: randomForest</code></pre>
-<pre><code>## Warning: package 'randomForest' was built under R version 3.3.3</code></pre>
-<pre><code>## randomForest 4.6-12</code></pre>
-<pre><code>## Type rfNews() to see new features/changes/bug fixes.</code></pre>
-<pre><code>## 
-## Attaching package: 'randomForest'</code></pre>
-<pre><code>## The following object is masked from 'package:ggplot2':
-## 
-##     margin</code></pre>
-<pre class="r"><code>rf.fit$finalModel</code></pre>
+rf.fit &lt;- train(classe ~., method=&quot;rf&quot;, trControl=tc, ntree=10, data=training)
+rf.fit$finalModel</code></pre>
 <pre><code>## 
 ## Call:
 ##  randomForest(x = x, y = y, ntree = 10, mtry = param$mtry) 
@@ -173,34 +159,23 @@ rf.fit &lt;- train(classe ~., method=&quot;rf&quot;, trControl=tc, ntree=10, dat
 ##                      Number of trees: 10
 ## No. of variables tried at each split: 27
 ## 
-##         OOB estimate of  error rate: 3.05%
+##         OOB estimate of  error rate: 3.12%
 ## Confusion matrix:
 ##      A    B    C    D    E class.error
-## A 4085   27   10   18    1  0.01352330
-## B   43 2716   43   14   13  0.03994344
-## C    4   61 2435   38   12  0.04509804
-## D    9   17   52 2298   13  0.03809125
-## E    5   31   16   18 2611  0.02610966</code></pre>
+## A 4061   52    6    9    4  0.01718296
+## B   57 2685   49   14   16  0.04820985
+## C    8   54 2444   36    9  0.04194434
+## D    6   23   42 2300   18  0.03725408
+## E    5   13   19   15 2618  0.01947566</code></pre>
 <pre class="r"><code>rf.pred.test &lt;- predict(rf.fit, testing)
 confusionMatrix(rf.pred.test, testing$classe)$overall[1] # Accuracy = 0.9871533</code></pre>
 <pre><code>##  Accuracy 
-## 0.9910277</code></pre>
+## 0.9896003</code></pre>
 </div>
 <div id="predicting-the-validation-test-set" class="section level3">
 <h3>Predicting the Validation Test Set</h3>
-<pre class="r"><code>library(dplyr)</code></pre>
-<pre><code>## 
-## Attaching package: 'dplyr'</code></pre>
-<pre><code>## The following object is masked from 'package:randomForest':
-## 
-##     combine</code></pre>
-<pre><code>## The following objects are masked from 'package:stats':
-## 
-##     filter, lag</code></pre>
-<pre><code>## The following objects are masked from 'package:base':
-## 
-##     intersect, setdiff, setequal, union</code></pre>
-<pre class="r"><code>vdf &lt;- read.csv(testfilename,header=TRUE,sep=&quot;,&quot;,na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;))
+<pre class="r"><code>library(dplyr)
+vdf &lt;- read.csv(testfilename,header=TRUE,sep=&quot;,&quot;,na.strings=c(&quot;NA&quot;,&quot;#DIV/0!&quot;))
 vdf &lt;- select(vdf, one_of(names(training[,-53])))
 vdf &lt;- rbind(training[1,-53], vdf);vdf &lt;- vdf[-1,]
 rf.pred.val &lt;- predict(rf.fit, newdata=vdf)
