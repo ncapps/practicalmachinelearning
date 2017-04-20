@@ -1,0 +1,60 @@
+---
+title: "Qualitative Activity Recognition"
+author: "ncapps"
+date: "April 19, 2017"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+### Executive Summary
+The aim of this project is to assess the quality of execution of weight lifting exercises using a model-based approach. Accelerometer data on the belt, forearm, arm, and dumbell from 6 participants was used to develop a model to predict the manner in which a participant completed a barbell lift.
+
+### Loading and cleaing data
+Data not measured by an accelerometer and variables where the majority of rows contained missing values were removed from the training dataset and were not used as predictors.
+```{r}
+library(AppliedPredictiveModeling);library(caret)
+trainfilename <- "pml-training.csv"; testfilename <- "pml-testing.csv"
+## Loaded 1622 rows and 160 columns
+df <- read.csv(trainfilename,
+                     header=TRUE,sep=",",na.strings=c("NA","#DIV/0!"))
+## Removed 100 predictors where 97% of all values are NA : 60 columns remaining
+df <- Filter(function(x){
+        sum(is.na(x))/nrow(df) < 0.97}, df)
+df <- df[,8:60] ## Remove non-accelerometer data
+inTrain <- createDataPartition(df$classe, p = 3/4)[[1]]
+training <- df[inTrain,]
+testing <- df[-inTrain,]
+set.seed(333)
+```
+
+### Model selection and cross Validation
+The Random Forest algorithm was selected because there were a large number of predictors where the interactions between variables is unknown. The model was trained using 10-fold cross validation with 3 repeats. The out-of-bag error rate (OOB) was estimated to be 3.16%.
+
+Training data was split such that 75% was used for training the model and 25% was used to evaluate model performance further. The random forest model had an accuracy of 98.71% on the test dataset.
+
+```{r}
+tc <- trainControl(method="repeatedcv", number=10, repeats=3)
+rf.fit <- train(classe ~., method="rf", trControl=tc, ntree=10, data=training)
+rf.fit$finalModel
+
+rf.pred.test <- predict(rf.fit, testing)
+confusionMatrix(rf.pred.test, testing$classe)$overall[1] # Accuracy = 0.9871533
+```
+
+### Predicting the Validation Test Set
+```{r}
+library(dplyr)
+vdf <- read.csv(testfilename,header=TRUE,sep=",",na.strings=c("NA","#DIV/0!"))
+vdf <- select(vdf, one_of(names(training[,-53])))
+vdf <- rbind(training[1,-53], vdf);vdf <- vdf[-1,]
+rf.pred.val <- predict(rf.fit, newdata=vdf)
+rf.pred.val[1:20]
+```
+
+### References
+Velloso, E.; Bulling, A.; Gellersen, H.; Ugulino, W.; Fuks, H. Qualitative Activity Recognition of Weight Lifting Exercises. Proceedings of 4th International Conference in Cooperation with SIGCHI (Augmented Human '13) . Stuttgart, Germany: ACM SIGCHI, 2013.
+
+Read more: http://groupware.les.inf.puc-rio.br/har#ixzz4ejKqMRpu
